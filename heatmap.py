@@ -26,14 +26,7 @@ import subprocess
 import sys
 import time
 
-GERRIT_HOST = 'review.openstack.org'
-GERRIT_PORT = 29418
-
-QUERY = ['gerrit', 'query', '--format=JSON', '--current-patch-set', '--',
-         'project:openstack/nova', 'branch:master',
-         #'is:open',
-         '-status:workinprogress', '-status:abandoned']
-
+import gerrit
 
 devnull = open('/dev/null', 'w')
 def get_patch(ref, rev):
@@ -47,31 +40,9 @@ def get_patch(ref, rev):
 
 
 def changes():
-    rows = 0
-    sortkey = None
-    while True:
-        query = QUERY
-        if sortkey is not None:
-            query = query + ['resume_sortkey:{key}'.format(key=sortkey)]
-
-        response = subprocess.check_output(['ssh', '-p', str(GERRIT_PORT),
-                                            str(GERRIT_HOST)] + query)
-
-        for line in response.splitlines():
-            result = json.loads(line)
-            if result.get('type') == 'stats':
-                rowcount = result['rowCount']
-                if rowcount == 0:
-                    return
-                # If rowCount > 0 we fall through and fetch more results
-            else:
-                sortkey = result['sortKey']
-                yield result
-                rows += 1
-
-            if rows == 1000:
-                return
-
+    return gerrit.query(['project:openstack/nova', 'branch:master',
+                        '-status:workinprogress', '-status:abandoned'],
+                        {'current-patch-set': True}, limit=1000)
 
 class Node(object):
     def __init__(self, parent, name):
