@@ -20,18 +20,12 @@ import subprocess
 GERRIT_HOST = 'review.openstack.org'
 GERRIT_PORT = 29418
 
-def query(query, options={}, host=GERRIT_HOST, port=GERRIT_PORT, limit=0):
+def query(query, options=[], host=GERRIT_HOST, port=GERRIT_PORT, limit=0):
     cmdline = ['ssh', '-p', str(port), str(host),
                'gerrit', 'query', '--format=JSON']
 
-    for opt, val in options.iteritems():
-        if opt == 'format':
-            raise ValueError('Setting format to anything other than JSON is '
-                             'not supported')
-        if val == True:
-            cmdline.append('--{opt}'.format(opt=opt))
-        else:
-            cmdline.append('--{opt}={val}'.format(opt=opt, val=val))
+    for opt in options:
+        cmdline.append('--{opt}'.format(opt=opt))
 
     cmdline.append('--')
     cmdline.extend(query)

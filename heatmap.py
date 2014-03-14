@@ -42,7 +42,7 @@ def get_patch(ref, rev):
 def changes():
     return gerrit.query(['project:openstack/nova', 'branch:master',
                         '-status:workinprogress', '-status:abandoned'],
-                        {'current-patch-set': True}, limit=1000)
+                        ['current-patch-set'], limit=1000)
 
 class Node(object):
     def __init__(self, parent, name):
