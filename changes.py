@@ -16,18 +16,21 @@
 # this program; if not, write to the Free Software Foundation, Inc., 51 Franklin
 # Street, Fifth Floor, Boston, MA 02110-1301  USA
 
+import collections
 from itertools import ifilter
 import re
 import sys
 
 import gerrit
 
+Field = collections.namedtuple('Field', ['path', 'truncate'])
+
 QUERY = ['project:openstack/nova', 'branch:master', 'is:open']
 OPTS = ['current-patch-set', 'dependencies']
-FIELDS = ['owner/username', 'subject', 'url']
+FIELDS = [Field('owner/username', 0), Field('subject', 70), Field('url', 0)]
 INDENT = 1
 
-FIELDS = map(lambda x: x.split('/'), FIELDS)
+FIELDS = map(lambda x: x._replace(path=x.path.split('/')), FIELDS)
 
 dirs = None
 if len(sys.argv) > 1:
@@ -62,8 +65,11 @@ for change in changes:
     fields = []
     for i in range(0, len(FIELDS)):
         val = change
-        for j in FIELDS[i]:
+        field = FIELDS[i]
+        for j in field.path:
             val = val[j]
+        if field.truncate > 0 and len(val) > field.truncate:
+            val = val[0:field.truncate]
         fields.append(val)
         if len(val) > max_width[i]:
             max_width[i] = len(val)
